@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title th:text="${title}">Título por defecto</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body class="container mt-5">
+    <header>
+        <h1>Mi App IA Generativa Y Prolog</h1>
+        <hr/>
+    </header>
+
+    <main th:replace="fragments/home :: content"></main>
+    <main th:replace="fragments/result :: content"></main>
+    
+    <footer class="mt-5">
+        <hr/>
+        <p>© 2025 Proyecto Lenguaje y Paradigma de Programacion</p>
+    </footer>
+    
+</body>
+</html>
+

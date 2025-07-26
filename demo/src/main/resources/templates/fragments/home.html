@@ -1,0 +1,16 @@
+<!-- home.html -->
+<div th:fragment="content">
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="card-title mb-4">Consulta a IA Generativa</h2>
+            <form method="POST" action="/query" >
+                <div class="mb-3">
+                    <label for="inputQuery" class="form-label">Escribe tu consulta:</label>
+                    <textarea id="inputQuery" name="query" rows="4" class="form-control" placeholder="Ej. ¿Qué es Prolog?"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Enviar</button>
+            </form>
+        </div>
+    </div>
+</div>
+
