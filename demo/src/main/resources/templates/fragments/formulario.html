@@ -1,0 +1,31 @@
+<!-- formulario.html -->
+<div th:fragment="content">
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="card-title mb-4">Formulario de Clasificación</h2>
+            <form method="POST" action="/procesar" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="color" class="form-label">Color:</label>
+                    <input type="text" id="color" name="color" class="form-control" placeholder="Ej. rojo" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="zona" class="form-label">Zona:</label>
+                    <input type="text" id="zona" name="zona" class="form-control" placeholder="Ej. norte" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="tamano" class="form-label">Tamaño:</label>
+                    <input type="text" id="tamano" name="tamano" class="form-control" placeholder="Ej. grande" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="imagen" class="form-label">Selecciona una imagen:</label>
+                    <input type="file" id="imagen" name="imagen" class="form-control" accept="image/*" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Enviar</button>
+            </form>
+        </div>
+    </div>
+</div>

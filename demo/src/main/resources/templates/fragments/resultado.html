@@ -1,0 +1,47 @@
+<!-- resultado.html -->
+<div th:fragment="content">
+    <div class="card shadow-sm mb-2">
+        <div class="card-body">
+            <h2 class="card-title mb-4">Resultado de Clasificación</h2>
+
+            <ul class="list-group">
+                <li class="list-group-item">
+                    <strong>Color ingresado:</strong>
+                    <span th:text="${color}">N/A</span>
+                </li>
+                <li class="list-group-item">
+                    <strong>Zona:</strong>
+                    <span th:text="${zona}">N/A</span>
+                </li>
+                <li class="list-group-item">
+                    <strong>Tamaño:</strong>
+                    <span th:text="${tamano}">N/A</span>
+                </li>
+                <li class="list-group-item">
+                    <strong>Color detectado en imagen:</strong>
+                    <span th:text="${colorDetectado}">N/A</span>
+                    <div th:style="'width: 100%; height: 50px; background-color: ' + ${colorDetectado} + ';  border: 0.5px solid black; border-radius: 5px;'"></div>
+                </li>
+                <li class="list-group-item" th:if="${resultadoProlog != null}">
+                    <strong>Resultado de inferencia Prolog:</strong>
+                    <span th:text="${resultadoProlog}">Esperando resultado...</span>
+                </li>
+            </ul>
+
+            <a href="/formulario" class="btn btn-outline-primary mt-3">Volver al formulario</a>
+        </div>
+    </div>
+    
+    <div class="container mt-2">
+             <!-- Resultado de Prolog -->
+            <div class="col">
+                <div class="card border-success">
+                    <div class="card-header bg-success text-white">Resultado Prolog</div>
+                    <div class="card-body">
+                        <pre th:text="${resultadoProlog}"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
