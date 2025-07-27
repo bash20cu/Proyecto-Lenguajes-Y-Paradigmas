@@ -6,9 +6,12 @@ package com.example.demo;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
@@ -103,21 +106,48 @@ public class HelloController {
         return "RGB(" + c.getRed() + "," + c.getGreen() + "," + c.getBlue() + ")";
     }
 
-    private String ejecutarProlog(String color, String zona, String tamano) throws IOException, InterruptedException {
-        String consulta = String.format("clasificar(%s, %s, %s, Resultado).", color, zona, tamano);
+private String ejecutarProlog(String color, String zona, String tamano) throws IOException, InterruptedException {
+    // Línea corregida
+String consulta = String.format(
+    ":- clasificar('%s', '%s', '%s', Resultado), writeln(Resultado).",
+    color, zona, tamano
+);
 
-        Files.write(Paths.get("consulta.pl"), Arrays.asList(
-                ":- consult('base.pl').",
-                consulta
-        ));
 
-        ProcessBuilder pb = new ProcessBuilder("swipl", "-q", "-f", "consulta.pl", "-t", "halt");
-        pb.redirectOutput(new File("resultado.txt"));
-        Process process = pb.start();
-        process.waitFor();
 
-        return Files.readString(Paths.get("resultado.txt"));
+    Path recursosPath = Paths.get("src", "main", "resources");
+    Path consultaPath = recursosPath.resolve("consulta.pl").toAbsolutePath();
+
+    Path basePlPath = recursosPath.resolve("base.pl").toAbsolutePath();
+    String rutaProlog = basePlPath.toString().replace("\\", "/");
+
+    System.out.println("Creando consulta.pl en: " + consultaPath);
+    System.out.println("Usando base.pl desde: " + rutaProlog);
+
+    // Asegúrate que la carpeta resources existe:
+    Files.createDirectories(recursosPath);
+
+    // Escribe consulta.pl en src/main/resources
+    Files.write(consultaPath, Arrays.asList(
+        ":- consult('" + rutaProlog + "').",
+        consulta
+    ));
+
+    ProcessBuilder pb = new ProcessBuilder("swipl", "-q", "-f", consultaPath.toString(), "-t", "halt");
+    pb.redirectErrorStream(true);
+    Process process = pb.start();
+
+    BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+    StringBuilder salida = new StringBuilder();
+    String linea;
+    while ((linea = reader.readLine()) != null) {
+        salida.append(linea).append("\n");
     }
+
+    process.waitFor();
+    return salida.toString().trim();
+}
+
 
     @PostMapping("/query")
     public String query(@RequestParam String query, Model model) {
