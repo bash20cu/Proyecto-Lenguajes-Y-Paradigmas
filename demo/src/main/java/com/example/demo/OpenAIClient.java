@@ -14,7 +14,7 @@ import java.util.*;
  * @author migue
  */
 public class OpenAIClient {
-    private static final String OPENAI_API_KEY = "XXXXXXXXXXXXXXXXXXXXXXX";
+    private static final String OPENAI_API_KEY = "XXXXXX";
     private static final String OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 
     private final OkHttpClient client = new OkHttpClient();
@@ -36,7 +36,7 @@ public class OpenAIClient {
         Map<String, Object> body = new HashMap<>();
         body.put("model", "gpt-3.5-turbo"); // Verificar que sea el modelo correcto
         body.put("messages", messages);
-        body.put("max_tokens", 200);
+        body.put("max_tokens", 70);
 
         String jsonBody = mapper.writeValueAsString(body);
 

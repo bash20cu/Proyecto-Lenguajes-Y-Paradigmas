@@ -37,15 +37,12 @@ public class HelloController {
 
     private OpenAIClient openAIClient = new OpenAIClient();
 
-    /*
-    @GetMapping("/")
-    public String home(Model model) {
-        model.addAttribute("title", "Consulta IA Generativa");
-        model.addAttribute("content", "home :: content");
-        return "layout";
+    private GeminiClient geminiClient;
+
+    public HelloController() throws Exception {
+        this.geminiClient = new GeminiClient();
     }
 
-     */
     @GetMapping({"/", "/formulario"})
     public String mostrarHome(Model model) {
         model.addAttribute("title", "Consulta IA Generativa");
@@ -63,30 +60,49 @@ public class HelloController {
 
         String colorDetectado = "rgb(255,255,255)";
 
-
         if (!imagen.isEmpty()) {
             BufferedImage img = ImageIO.read(imagen.getInputStream());
             colorDetectado = detectarColorPrincipal(img);
         }
         if (colorDetectado == null || colorDetectado.isBlank()) {
-            colorDetectado = "rgb(255,255,255)"; // valor por defecto válido para CSS
+            colorDetectado = "rgb(255,255,255)";
         }
 
-
-        // Llama a Prolog con los datos
+        // Ejecutar Prolog
         String resultadoProlog = ejecutarProlog(color, zona, tamano);
 
-        // Agrega atributos al modelo
+        // Extraer nombre del ave del resultado Prolog
+        // Ejemplo: "Resultado de inferencia Prolog: colibri_esmeralda"
+        String nombreAve = null;
+        if (resultadoProlog != null && resultadoProlog.contains(":")) {
+            nombreAve = resultadoProlog.substring(resultadoProlog.indexOf(":") + 1).trim();
+        }
+
+        // Llamar a Gemini con una pregunta basada en el resultado de Prolog
+        String historiaAve = "No se pudo obtener la historia del ave.";
+        if (nombreAve != null && !nombreAve.isEmpty()) {
+            String prompt = "Cuéntame la historia del ave llamada " + nombreAve;
+            try {
+                //System.out.println(historiaAve);
+                historiaAve = geminiClient.getCompletion(prompt);
+                System.out.println(historiaAve);
+            } catch (Exception e) {
+                historiaAve = "Error al obtener información de Gemini: " + e.getMessage();
+            }
+        }
+
+        // Agregar al modelo para mostrar en la vista
         model.addAttribute("color", color);
         model.addAttribute("zona", zona);
         model.addAttribute("tamano", tamano);
         model.addAttribute("colorDetectado", colorDetectado.toLowerCase());
         model.addAttribute("resultadoProlog", resultadoProlog);
+        model.addAttribute("historiaAve", historiaAve);
 
-        // Control de visibilidad
         model.addAttribute("title", "Resultado de Clasificación");
         model.addAttribute("mostrarFormulario", true);
         model.addAttribute("mostrarResultado", true);
+        model.addAttribute("mostrarHistoriaAve", true); 
 
         return "layout";
     }
@@ -106,54 +122,51 @@ public class HelloController {
         return "RGB(" + c.getRed() + "," + c.getGreen() + "," + c.getBlue() + ")";
     }
 
-private String ejecutarProlog(String color, String zona, String tamano) throws IOException, InterruptedException {
-    // Línea corregida
-String consulta = String.format(
-    ":- clasificar('%s', '%s', '%s', Resultado), writeln(Resultado).",
-    color, zona, tamano
-);
+    private String ejecutarProlog(String color, String zona, String tamano) throws IOException, InterruptedException {
+        // Línea corregida
+        String consulta = String.format(
+                ":- clasificar('%s', '%s', '%s', Resultado), writeln(Resultado).",
+                color, zona, tamano
+        );
 
+        Path recursosPath = Paths.get("src", "main", "resources");
+        Path consultaPath = recursosPath.resolve("consulta.pl").toAbsolutePath();
 
+        Path basePlPath = recursosPath.resolve("base.pl").toAbsolutePath();
+        String rutaProlog = basePlPath.toString().replace("\\", "/");
 
-    Path recursosPath = Paths.get("src", "main", "resources");
-    Path consultaPath = recursosPath.resolve("consulta.pl").toAbsolutePath();
+        System.out.println("Creando consulta.pl en: " + consultaPath);
+        System.out.println("Usando base.pl desde: " + rutaProlog);
 
-    Path basePlPath = recursosPath.resolve("base.pl").toAbsolutePath();
-    String rutaProlog = basePlPath.toString().replace("\\", "/");
+        // Asegúrate que la carpeta resources existe:
+        Files.createDirectories(recursosPath);
 
-    System.out.println("Creando consulta.pl en: " + consultaPath);
-    System.out.println("Usando base.pl desde: " + rutaProlog);
+        // Escribe consulta.pl en src/main/resources
+        Files.write(consultaPath, Arrays.asList(
+                ":- consult('" + rutaProlog + "').",
+                consulta
+        ));
 
-    // Asegúrate que la carpeta resources existe:
-    Files.createDirectories(recursosPath);
+        ProcessBuilder pb = new ProcessBuilder("swipl", "-q", "-f", consultaPath.toString(), "-t", "halt");
+        pb.redirectErrorStream(true);
+        Process process = pb.start();
 
-    // Escribe consulta.pl en src/main/resources
-    Files.write(consultaPath, Arrays.asList(
-        ":- consult('" + rutaProlog + "').",
-        consulta
-    ));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        StringBuilder salida = new StringBuilder();
+        String linea;
+        while ((linea = reader.readLine()) != null) {
+            salida.append(linea).append("\n");
+        }
 
-    ProcessBuilder pb = new ProcessBuilder("swipl", "-q", "-f", consultaPath.toString(), "-t", "halt");
-    pb.redirectErrorStream(true);
-    Process process = pb.start();
-
-    BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-    StringBuilder salida = new StringBuilder();
-    String linea;
-    while ((linea = reader.readLine()) != null) {
-        salida.append(linea).append("\n");
+        process.waitFor();
+        return salida.toString().trim();
     }
-
-    process.waitFor();
-    return salida.toString().trim();
-}
-
 
     @PostMapping("/query")
     public String query(@RequestParam String query, Model model) {
         String response;
         try {
-            response = openAIClient.getChatCompletion(query);
+            response = geminiClient.getCompletion(query);
         } catch (Exception e) {
             response = "Error: " + e.getMessage();
         }
